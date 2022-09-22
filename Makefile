@@ -28,7 +28,7 @@ OBJ_CUR = $(patsubst %.cpp,%.o,$(SRCCUR))
 OBJ_COR = $(patsubst %.cpp,%.o,$(SRC_COR))
 OBJ_SCHE = $(patsubst %.cpp,%.o,$(SRC_SCHE))
 OBJ_EPOLL = $(patsubst %.cpp,%.o,$(SRC_EPOLL)) 
-OBJ_HOOK = $(patsubst %.cpp,%.o,$(HOOK))
+OBJ_HOOK = $(patsubst %.cpp,%.o,$(SRC_HOOK))
 
 OBJ_CUR := $(addprefix $(DIR_OBJS)/, $(OBJ_CUR))
 OBJ_COR := $(addprefix $(DIR_OBJS)/, $(OBJ_COR))
