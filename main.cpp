@@ -10,7 +10,7 @@
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 
-void server_reader(void *arg) {
+void read_cb(void *arg) {
 	int fd = *(int *)arg;
 	int ret = 0;
 
@@ -77,9 +77,8 @@ void server(void *arg) {
 			
 			printf("client fd : %d, time_used: %d\n", cli_fd, time_used);
 		}
-		printf("new client comming\n");
 
-		coroutine_create(NULL, server_reader, &cli_fd);
+		coroutine_create(NULL, read_cb, &cli_fd);
 	}
 	
 }
