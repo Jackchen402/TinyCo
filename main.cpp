@@ -2,12 +2,10 @@
 #include "epoller/epoller.h"
 #include "hook/socket_f.h"
 
-#include <sys/time.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 
 #define MAX_CLIENT_NUM			100
-#define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 
 void read_cb(void *arg) {
@@ -25,7 +23,7 @@ void read_cb(void *arg) {
 		ret = recv(fd, buf, 1024, 0);
 		if (ret > 0) {
 			if(fd > MAX_CLIENT_NUM) 
-			printf("read from server: %.*s\n", ret, buf);
+				printf("read from server: %.*s\n", ret, buf);
 
 			ret = send(fd, buf, strlen(buf), 0);
 			if (ret == -1) {
@@ -58,27 +56,22 @@ void server(void *arg) {
 	listen(fd, 20);
 	printf("listen port : %d\n", port);
 
+	steady_clock::time_point t_begin = steady_clock::now();
 	
-	struct timeval tv_begin;
-	gettimeofday(&tv_begin, NULL);
-
 	while (1) {
 		socklen_t len = sizeof(struct sockaddr_in);
 		
-		int cli_fd = accept(fd, (struct sockaddr*)&remote, &len);
+		int client_fd = accept(fd, (struct sockaddr*)&remote, &len);
 		
-		if (cli_fd % 1000 == 999) {
-
-			struct timeval tv_cur;
-			memcpy(&tv_cur, &tv_begin, sizeof(struct timeval));
+		if (client_fd % 1000 == 999) {
 			
-			gettimeofday(&tv_begin, NULL);
-			int time_used = TIME_SUB_MS(tv_begin, tv_cur);
+			steady_clock::time_point t_now = steady_clock::now();
+			milliseconds time_used = duration_cast<milliseconds>(t_now.time_since_epoch() - t_begin.time_since_epoch());
 			
-			printf("client fd : %d, time_used: %d\n", cli_fd, time_used);
+			printf("client fd : %d, time_used: %ld\n", client_fd, time_used.count());
 		}
 
-		coroutine_create(NULL, read_cb, &cli_fd);
+		coroutine_create(NULL, read_cb, &client_fd);
 	}
 	
 }
@@ -89,14 +82,14 @@ int main(int argc, char *argv[]) {
 
 	int i = 0;
 	unsigned short base_port = 8888;
-	for (i = 0;i < 1;i ++) {
+	for (i = 0;i < MAX_CLIENT_NUM;i ++) {
 		unsigned short *port = (unsigned short *)calloc(1, sizeof(unsigned short));
 		*port = base_port + i;
 		coroutine_create(NULL, server, port); // not run
 	}
 
-    Schedule *sched = Schedule::get_schedule();
-    sched->run();  // run
+	Schedule *sched = Schedule::get_schedule();
+	sched->run();  // run
 	schedule_free(sched);
 
 	return 0;
